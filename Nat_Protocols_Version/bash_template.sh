@@ -15,24 +15,24 @@ set -o pipefail
 set -u
 
 #DEFAULTS
-DSpath=''
+DSpath='/data/pipeline/Duplex-Sequencing/Nat_Protocols_Version'
 alignRef=''
 runIdentifier=''
-read1in=seq1.fq
-read2in=seq2.fq
+read1in='seq1.fq'
+read2in='seq2.fq'
 iSize=-1
 minMem=3
 maxMem=1000
 cutOff=0.7
 nCutOff=1
 readLength=0
-barcodeLength=12
-spacerLength=5
+barcodeLength=6 # 12
+spacerLength=6 #5
 filtersSet='os'
 readTypes='dpm'
 repFilt=9
 readOut=1000000
-Ncores=18
+Ncores=16
 
 #NONDEFAULTS
 
@@ -67,9 +67,9 @@ export Ncores
 export output_folder
 
 # Load required software into path using the Environment Modules Project (http://modules.sourceforge.net)
-module load Python
-module load BWA
-module load SAMtools
+#module load Python
+#module load BWA
+#module load SAMtools
 
 # Print out options used to log file
 touch $logFile
@@ -110,19 +110,20 @@ bwa sampe -s $alignRef ${runIdentifier}.seq1.aln ${runIdentifier}.seq2.aln ${run
 echo "Sorting aligned sequences" | tee -a ${logFile}
 date | tee -a ${logFile}
 
-samtools view -Sbu ${runIdentifier}.pe.sam | samtools sort - ${runIdentifier}.pe.sort
+samtools view -Sbu ${runIdentifier}.pe.sam | samtools sort - -o ${runIdentifier}.pe.sort.bam
 
 # Step 5: Run Consensus Maker
 echo "Starting Consensus Maker" | tee -a ${logFile}
 date | tee -a ${logFile}
 
-python ${DSpath}/ConsensusMaker.py --infile ${runIdentifier}.pe.sort.bam --tagfile ${runIdentifier}.pe.tagcounts --outfile ${runIdentifier}.sscs.bam --minmem $minMem --maxmem $maxMem --readlength $readLength --cutoff $cutOff --Ncutoff $nCutOff --read_type $readTypes --filt $filtersSet --isize $iSize
+#python ${DSpath}/ConsensusMaker.py --infile ${runIdentifier}.pe.sort.bam --tagfile ${runIdentifier}.pe.tagcounts --outfile ${runIdentifier}.sscs.bam --minmem $minMem --maxmem $maxMem --readlength $readLength --cutoff $cutOff --Ncutoff $nCutOff --read_type $readTypes --filt $filtersSet --isize $iSize
+python ${DSpath}/ConsensusMaker.v2.py --infile ${runIdentifier}.pe.sort.bam --tagfile ${runIdentifier} --outfile ${runIdentifier}.sscs.bam --minmem $minMem --maxmem $maxMem --readlength $readLength --cutoff $cutOff --Ncutoff $nCutOff --read_type $readTypes --filt $filtersSet --isize $iSize
 
 # Step 6: Sort SSCSs
 echo "Sorting SSCSs" | tee -a ${logFile}
 date | tee -a ${logFile}
 
-samtools view -bu ${runIdentifier}.sscs.bam | samtools sort - ${runIdentifier}.sscs.sort
+samtools view -bu -@ 8 ${runIdentifier}.sscs.bam | samtools sort - -@ 8 -o ${runIdentifier}.sscs.sort.bam
 
 # Step 7: Run Duplex Maker
 echo "Starting Duplex Maker" | tee -a ${logFile}
@@ -142,7 +143,7 @@ bwa sampe -s $alignRef ${runIdentifier}.dcs.r1.aln ${runIdentifier}.dcs.r2.aln $
 echo "Sorting aligned DCSs" | tee -a ${logFile}
 date | tee -a ${logFile}
 
-samtools view -Sbu ${runIdentifier}.dcs.sam | samtools sort - ${runIdentifier}.dcs.aln.sort
+samtools view -Sbu -@ 8 ${runIdentifier}.dcs.sam | samtools sort - -@ 8 -o ${runIdentifier}.dcs.aln.sort.bam
 
 # Step 10: Index sorted DCSs
 echo "Indexing sorted DCSs" | tee -a ${logFile}
@@ -150,7 +151,10 @@ date | tee -a ${logFile}
 
 samtools index ${runIdentifier}.dcs.aln.sort.bam
 
-# Step 11: Clean up
+# Step 11 soft-clipping 
+
+
+# Step 12: Clean up
 echo "Finishing with run.. " $runIdentifier | tee -a ${logFile}
 echo "Cleaning.." | tee -a ${logFile}
 date | tee -a ${logFile} 

@@ -3,7 +3,7 @@
 DCS Filter
 Version 2.0
 By Brendan Kohrn, Scott Kennedy(1), and Mike Schmitt(1)
-(1) Department of Pathology, University of Washington School of Medicine, Seattle, WA 98195 
+(1) Department of Pathology, University of Washington School of Medicine, Seattle, WA 98195
 Based on work by Scott Kennedy, Mike Schmitt
 December 17, 2013
 
@@ -12,13 +12,13 @@ Required modules: Pysam, Samtools, BioPython
 
 Inputs:
     A position-sorted paired-end BAM file containing SSCSs
-    
-Outputs: 
+
+Outputs:
     1: A paired-end BAM file containing DCSs
     2: A single-end BAM file containing unpaired DCSs
     3: A pair of fastq files containing DCSs for use in realigning.
-    
-    Note: Quality scores and cigar strings in these files are meaningless. 
+
+    Note: Quality scores and cigar strings in these files are meaningless.
 
 This program goes through the input file by position, making DCSs as it goes and writing them to file.  At the end of
 the run, any unpaired DCSs are written to a file ending in _UP.bam.
@@ -62,7 +62,6 @@ def print_read(read_in):
 def dcs_maker(grouped_reads_list,  read_length):
 	# The Duplex maker substitutes an N if the two input sequences are not identical at a position.
 	consensus_read = ''
-	print grouped_reads_list[0]+"\t"+grouped_reads_list[1]
 	for i in xrange(read_length):  # rebuild consensus read taking into account the cutoff percentage
 		if grouped_reads_list[0][i] == grouped_reads_list[1][i]:
 			consensus_read += grouped_reads_list[0][i]
@@ -157,9 +156,8 @@ def main():
 
 				try:
 					consensus = dcs_maker([read_dict[dict_tag][6], read_dict[switch_tag][6]],  o.read_length)
+					print dict_tag+"\t"+switch_tag+"\t"+read_dict[dict_tag][1] +"\t"+read_dict[dict_tag][2]+"\t"+read_dict[dict_tag][3]+"\t"+read_dict[dict_tag][4]+"\t"+read_dict[switch_tag][1] +"\t"+read_dict[switch_tag][2]+"\t"+read_dict[switch_tag][3]+"\t"+read_dict[switch_tag][4]
 					duplexes_made += 1
-					#print dict_tag+"\t"+switch_tag+"\t"+read_dict[dict_tag][1] +"\t"+read_dict[dict_tag][2]+"\t"+read_dict[dict_tag][3]+"\t"+read_dict[dict_tag][4]+"\t"+read_dict[switch_tag][1] +"\t"+read_dict[switch_tag][2]+"\t"+read_dict[switch_tag][3]+"\t"+read_dict[switch_tag][4]
-					print dict_tag+"\t"+switch_tag
 					# Filter out consensuses with too many Ns in them
 					if consensus.count("N")/len(consensus) > o.Ncutoff:
 						nC += 1

@@ -1,0 +1,1 @@
+python rmDup.v2.py --infile chrM.bam --outfile chrM.sscs.bam --tag_file chrM --tag_stats chrM --rep_filt 12 --minmem 1 --maxmem 1000 --cut_off 0.55 --Ncut_off 3.0 --read_length 138 --read_type dp --isize 2000 --filt n

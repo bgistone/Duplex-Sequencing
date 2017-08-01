@@ -17,6 +17,7 @@ def consensus_caller(input_reads, cutoff, tag, length_check):
 	if length_check is True:
 
 		for read in input_reads[1:]:
+			print len(read),len(input_reads[0])
 			if len(read) != len(input_reads[0]):
 				raise Exception("Read lengths for tag %s used for calculating the SSCS are not uniform!!!" % tag)
 
@@ -86,10 +87,10 @@ def main():
 						help="Sample name to uniquely identify samples")
 	o = parser.parse_args()
 
-	dummy_header = {'HD': {'VN': '1.0'}, 'SQ': [{'LN': 1575, 'SN': 'chr1'}, {'LN': 1584, 'SN': 'chr2'}]}
-	in_bam_file = pysam.AlignmentFile(o.in_bam, "rb", check_sq=False)
-	temp_bam = pysam.AlignmentFile(o.prefix + ".temp.bam", 'wb', header=dummy_header)
-	paired_end_count = 1
+#	dummy_header = {'HD': {'VN': '1.0'}, 'SQ': [{'LN': 1575, 'SN': 'chr1'}, {'LN': 1584, 'SN': 'chr2'}]}
+#	in_bam_file = pysam.AlignmentFile(o.in_bam, "rb", check_sq=False)
+#	temp_bam = pysam.AlignmentFile(o.prefix + ".temp.bam", 'wb', header=dummy_header)
+#	paired_end_count = 1
 
 	if o.write_sscs is True:
 
@@ -108,55 +109,55 @@ def main():
 
 	print "Parsing tags..."
 
-	for line in in_bam_file.fetch(until_eof=True):
-
-		if paired_end_count % 2 == 1:
-
-			temp_read1_entry = pysam.AlignedSegment()
-			temp_read1_entry.query_name = line.query_name
-			temp_read1_entry.query_sequence = line.query_alignment_sequence
-			temp_read1_entry.query_qualities = line.query_alignment_qualities
-
-		if paired_end_count % 2 == 0:
-
-			temp_bam_entry = pysam.AlignedSegment()
-
-			if temp_read1_entry.query_sequence[:o.tag_len] > line.query_alignment_sequence[:o.tag_len]:
-				temp_bam_entry.query_name = temp_read1_entry.query_sequence[:o.tag_len] + \
-										line.query_alignment_sequence[:o.tag_len] + '#ab'
-
-			elif temp_read1_entry.query_sequence[:o.tag_len] < line.query_alignment_sequence[:o.tag_len]:
-				temp_bam_entry.query_name = line.query_alignment_sequence[:o.tag_len] + \
-											temp_read1_entry.query_sequence[:o.tag_len] + '#ba'
-
-			elif temp_read1_entry.query_sequence[:o.tag_len] == line.query_alignment_sequence[:o.tag_len]:
-				paired_end_count += 1
-				continue
-
-			# Write entries for Read 1
-			temp_bam_entry.query_name += ":1"
-			temp_bam_entry.query_sequence = temp_read1_entry.query_sequence[o.tag_len + o.spcr_len:]
-			temp_bam_entry.query_qualities = temp_read1_entry.query_qualities[o.tag_len + o.spcr_len:]
-			temp_bam_entry.set_tag('X?', temp_read1_entry.query_name, 'Z')
-			temp_bam.write(temp_bam_entry)
-
-			# Write entries for Read 2
-			temp_bam_entry.query_name = temp_bam_entry.query_name.replace('1', '2')
-			temp_bam_entry.query_sequence = line.query_sequence[o.tag_len + o.spcr_len:]
-			temp_bam_entry.query_qualities = line.query_qualities[o.tag_len + o.spcr_len:]
-			temp_bam_entry.set_tag('X?', line.query_name, 'Z')
-			temp_bam.write(temp_bam_entry)
-
-		paired_end_count += 1
-
-	in_bam_file.close()
-	temp_bam.close()
+#	for line in in_bam_file.fetch(until_eof=True):
+#
+#		if paired_end_count % 2 == 1:
+#
+#			temp_read1_entry = pysam.AlignedSegment()
+#			temp_read1_entry.query_name = line.query_name
+#			temp_read1_entry.query_sequence = line.query_alignment_sequence
+#			temp_read1_entry.query_qualities = line.query_alignment_qualities
+#
+#		if paired_end_count % 2 == 0:
+#
+#			temp_bam_entry = pysam.AlignedSegment()
+#
+#			if temp_read1_entry.query_sequence[:o.tag_len] > line.query_alignment_sequence[:o.tag_len]:
+#				temp_bam_entry.query_name = temp_read1_entry.query_sequence[:o.tag_len] + \
+#										line.query_alignment_sequence[:o.tag_len] + '#ab'
+#
+#			elif temp_read1_entry.query_sequence[:o.tag_len] < line.query_alignment_sequence[:o.tag_len]:
+#				temp_bam_entry.query_name = line.query_alignment_sequence[:o.tag_len] + \
+#											temp_read1_entry.query_sequence[:o.tag_len] + '#ba'
+#
+#			elif temp_read1_entry.query_sequence[:o.tag_len] == line.query_alignment_sequence[:o.tag_len]:
+#				paired_end_count += 1
+#				continue
+#
+#			# Write entries for Read 1
+#			temp_bam_entry.query_name += ":1"
+#			temp_bam_entry.query_sequence = temp_read1_entry.query_sequence[o.tag_len + o.spcr_len:]
+#			temp_bam_entry.query_qualities = temp_read1_entry.query_qualities[o.tag_len + o.spcr_len:]
+#			temp_bam_entry.set_tag('X?', temp_read1_entry.query_name, 'Z')
+#			temp_bam.write(temp_bam_entry)
+#
+#			# Write entries for Read 2
+#			temp_bam_entry.query_name = temp_bam_entry.query_name.replace('1', '2')
+#			temp_bam_entry.query_sequence = line.query_sequence[o.tag_len + o.spcr_len:]
+#			temp_bam_entry.query_qualities = line.query_qualities[o.tag_len + o.spcr_len:]
+#			temp_bam_entry.set_tag('X?', line.query_name, 'Z')
+#			temp_bam.write(temp_bam_entry)
+#
+#		paired_end_count += 1
+#
+#	in_bam_file.close()
+#	temp_bam.close()
 
 	print "Sorting reads on tag sequence..."
 
-	pysam.sort("-n", o.prefix + ".temp.bam", "-o", o.prefix + ".temp.sort.bam")  # Sort by read name, which will be the
-	# tag sequence in this case.
-	os.remove(o.prefix + ".temp.bam")
+#	pysam.sort("-n", o.prefix + ".temp.bam", "-o", o.prefix + ".temp.sort.bam")  # Sort by read name, which will be the
+#	# tag sequence in this case.
+#	os.remove(o.prefix + ".temp.bam")
 
 	'''Extracting tags and sorting based on tag sequence is complete. This block of code now performs the consensus
 	calling on the tag families in the temporary name sorted bam file.'''
@@ -199,17 +200,19 @@ def main():
 
 				elif o.minmem <= len(seq_dict[tag_subtype]) <= o.maxmem:  # Tag types w/o reads should not be submitted
 					#  as long as minmem is > 0
+					print "for freq between minmem and maxmem\n"
 					seq_dict[tag_subtype] = [consensus_caller(seq_dict[tag_subtype], o.cutoff, tag, True),
 											str(len(seq_dict[tag_subtype]))]
 					qual_dict[tag_subtype] = qual_calc(qual_dict[tag_subtype])
 
 				elif len(seq_dict[tag_subtype]) > o.maxmem:
+					print "for freq > maxmem\n"
 					seq_dict[tag_subtype] = [consensus_caller(seq_dict[tag_subtype][:o.maxmem], o.cutoff, tag, True),
 											str(len(seq_dict[tag_subtype]))]
 					qual_dict[tag_subtype] = qual_calc(qual_dict[tag_subtype])
 
 			if o.write_sscs is True:
-
+				print "write sscs...\n";
 				if len(seq_dict['ab:1']) != 0 and len(seq_dict['ab:2']) != 0:
 					corrected_qual_score = map(lambda x: x if x < 41 else 41, qual_dict['ab:1'])
 					read1_sscs_fq_file.write('@%s#ab/1\n%s\n+%s\n%s\n' %
@@ -233,8 +236,8 @@ def main():
 																					for x in corrected_qual_score)))
 
 			if o.without_dcs is False:
-
 				if len(seq_dict['ab:1']) != 0 and len(seq_dict['ba:2']) != 0:
+					print "write dcs...read1"
 					dcs_read_1 = [consensus_caller([seq_dict['ab:1'][0], seq_dict['ba:2'][0]], 1, tag, False),
 								seq_dict['ab:1'][1], seq_dict['ba:2'][1]]
 					dcs_read_1_qual = map(lambda x: x if x < 41 else 41, qual_calc([qual_dict['ab:1'], qual_dict['ba:2']]))
@@ -247,6 +250,7 @@ def main():
 						dcs_read_1_qual = '!' * read1_dcs_len
 
 				if len(seq_dict['ba:1']) != 0 and len(seq_dict['ab:2']) != 0:
+					print "write dcs...read2"
 					dcs_read_2 = [consensus_caller([seq_dict['ba:1'][0], seq_dict['ab:2'][0]], 1, tag, False),
 								seq_dict['ba:1'][1], seq_dict['ab:2'][1]]
 					dcs_read_2_qual = map(lambda x: x if x < 41 else 41, qual_calc([qual_dict['ba:1'], qual_dict['ab:2']]))
